@@ -177,6 +177,8 @@ static void record_current_pc_page(CPUState* cs, target_ulong tbStart,
 	panda_cpu_state(cs, &pc, &cs_base, &flags);
 	assert(tbStart == pc);
 
+	target_ulong stack = panda_current_sp(cs);
+
 	if (StartAddr && EndAddr) {
 		if (pc < StartAddr || pc >= EndAddr)
 			return;
@@ -226,9 +228,10 @@ static void record_current_pc_page(CPUState* cs, target_ulong tbStart,
 		fprintf(df, "\n"TARGET_FMT_lx":\n (None)", pc);
 	} else {
 		fprintf(df,
-				"\ncs["TARGET_FMT_lx"] lp["TARGET_FMT_lx"] "TARGET_FMT_lx":\n",
+				"\ncs["TARGET_FMT_lx"] lp["TARGET_FMT_lx"] sp["TARGET_FMT_lx"] "TARGET_FMT_lx":\n",
 				(target_ulong) (uintptr_t) cs, (theLastTb ? theLastTb->pc : 0),
-				pc);
+				stack, pc);
+#if 0
 		if (curTb) {
 			TranslationBlock* jln0 = (TranslationBlock*) curTb->jmp_list_next[0];
 			TranslationBlock* jln1 = (TranslationBlock*) curTb->jmp_list_next[1];
@@ -249,6 +252,7 @@ static void record_current_pc_page(CPUState* cs, target_ulong tbStart,
 					(target_ulong) (uintptr_t) theLastTb, (jln0 ? jln0->pc : 0),
 					(jln1 ? jln1->pc : 0), (jlf ? jlf->pc : 0));
 		}
+#endif
 		DumpHex(mem_buf, tbSize, df);
 	}
 	fflush(df);
