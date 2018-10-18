@@ -20,6 +20,7 @@ memsavep
 unigrams
 textprinter
 net
-network
+########note: disabled this plugin by abin ###########
+#network
 filereadmon
 win2000x86intro
