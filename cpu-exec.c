@@ -158,10 +158,20 @@ static void record_current_pc_page(CPUState* cs, target_ulong tbStart,
 	char name_buf[1024];
 	int ret;
 
+	target_ulong pc, cs_base;
+	uint32_t flags;
+	panda_cpu_state(cs, &pc, &cs_base, &flags);
+	assert(tbStart == pc);
+
+	if(StartTimePC && (StartTimePC == pc))
+		rr_end_all_code_records_requested = 0;
+	if(EndTimePC && (EndTimePC == pc))
+		rr_end_all_code_records_requested = 1;
+
 	if (rr_end_all_code_records_requested)
 		return;
-	snprintf(name_buf, sizeof(name_buf), TARGET_FMT_lx, asid);
 
+	snprintf(name_buf, sizeof(name_buf), TARGET_FMT_lx, asid);
 	if (rr_end_code_record_names
 			&& g_hash_table_contains(rr_end_code_record_names, name_buf))
 		return;
@@ -172,15 +182,10 @@ static void record_current_pc_page(CPUState* cs, target_ulong tbStart,
 			return;
 	}
 
-	target_ulong pc, cs_base;
-	uint32_t flags;
-	panda_cpu_state(cs, &pc, &cs_base, &flags);
-	assert(tbStart == pc);
-
 	target_ulong stack = panda_current_sp(cs);
 
-	if (StartAddr && EndAddr) {
-		if (pc < StartAddr || pc >= EndAddr)
+	if (StartMemAddr && EndMemAddr) {
+		if (pc < StartMemAddr || pc >= EndMemAddr)
 			return;
 	}
 
@@ -255,6 +260,7 @@ static void record_current_pc_page(CPUState* cs, target_ulong tbStart,
 #endif
 		DumpHex(mem_buf, tbSize, df);
 	}
+	last_pc_record = tbStart;
 	fflush(df);
 	fclose(df);
 
@@ -388,7 +394,6 @@ static tcg_target_ulong cpu_tb_exec(CPUState *cpu, TranslationBlock *itb) {
 					record_current_pc_page(cpu, itb->pc, itb->size),
 					/*record_action=*/
 					RR_NO_ACTION);
-					last_pc_record = itb->pc;
 				} else {
 					// do nothing
 				}

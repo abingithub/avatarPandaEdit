@@ -1789,6 +1789,14 @@ ETEXI
         .help       = "trace one process with pc in [start_addr, end_addr)",
         .cmd = hmp_trace_one,
     },
+    
+    {
+        .name       = "trace_one_detail",
+        .args_type  = "record_name:s,start_mem_addr:s,end_mem_addr:s,start_time_pc:s?,end_time_pc:s?",
+        .params     = "[record_name] [start_mem_addr] [end_mem_addr] [start_time_pc] [end_time_pc]",
+        .help       = "trace one process with pc located in [start_mem_addr, end_mem_addr), and time in region [start_time_pc, end_time_pc) ",
+        .cmd = hmp_trace_one_detail,
+    },
 
     {
         .name       = "begin_code_record",

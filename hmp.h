@@ -141,6 +141,7 @@ void hmp_hotpluggable_cpus(Monitor *mon, const QDict *qdict);
 // PANDA Record/Replay HMP
 void hmp_begin_record(Monitor *mon, const QDict *qdict);
 void hmp_trace_one(Monitor *mon, const QDict *qdict);
+void hmp_trace_one_detail(Monitor* mon, const QDict* qdict);
 void hmp_begin_code_record(Monitor *mon, const QDict *qdict);
 void hmp_begin_code_records(Monitor *mon, const QDict *qdict);
 void hmp_begin_record_from(Monitor *mon, const QDict *qdict);

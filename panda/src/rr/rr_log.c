@@ -78,6 +78,7 @@ RR_log* rr_nondet_log = NULL;
 
 bool rr_replay_complete = false;
 
+#define RR_CODE_RECORD_TRACE_ONE_DETAIL_REQUEST 6
 #define RR_CODE_RECORD_TRACE_ONE_REQUEST 5
 #define RR_CODE_RECORD_ONE_REQUEST 4
 #define RR_CODE_RECORD_ALL_REQUEST 3
@@ -120,14 +121,18 @@ volatile sig_atomic_t rr_end_all_code_records_requested = 0;
 GHashTable* rr_end_code_record_names = NULL;
 GHashTable* rr_begin_code_record_names = NULL;
 volatile sig_atomic_t rr_end_replay_requested = 0;
-char* rr_requested_start_addr = NULL;
-char* rr_requested_end_addr = NULL;
+char* rr_requested_start_mem_addr = NULL;
+char* rr_requested_end_mem_addr = NULL;
+char* rr_requested_start_time_pc = NULL;
+char* rr_requested_end_time_pc = NULL;
 char* rr_requested_name = NULL;
 char* rr_snapshot_name = NULL;
 volatile sig_atomic_t NewTrace = 0;
 volatile sig_atomic_t TraceDetail = 0; /* True: dump every inst; False: dump insts not appeared*/
-volatile unsigned long long StartAddr = 0;
-volatile unsigned long long EndAddr = 0;
+volatile unsigned long long StartMemAddr = 0;
+volatile unsigned long long EndMemAddr = 0;
+volatile unsigned long long StartTimePC = 0;
+volatile unsigned long long EndTimePC = 0;
 
 unsigned rr_next_progress = 1;
 
@@ -1262,14 +1267,42 @@ void qmp_trace_one(const char* record_name, const char* start_addr,
     if(rr_requested_name)
     	g_free(rr_requested_name);
     rr_requested_name = g_strdup(record_name);
-    if(rr_requested_start_addr)
-    	g_free(rr_requested_start_addr);
+
+    if(rr_requested_start_mem_addr)
+    	g_free(rr_requested_start_mem_addr);
     if(start_addr)
-    	rr_requested_start_addr = g_strdup(start_addr);
-    if(rr_requested_end_addr)
-    	g_free(rr_requested_end_addr);
+    	rr_requested_start_mem_addr = g_strdup(start_addr);
+    if(rr_requested_end_mem_addr)
+    	g_free(rr_requested_end_mem_addr);
     if(end_addr)
-    	rr_requested_end_addr = g_strdup(end_addr);
+    	rr_requested_end_mem_addr = g_strdup(end_addr);
+}
+
+void qmp_trace_one_detail(const char* record_name,
+		const char* start_mem_addr, const char* end_mem_addr,
+		const char* start_time_pc, const char* end_time_pc, Error** errp) {
+	rr_record_code_requested = RR_CODE_RECORD_TRACE_ONE_DETAIL_REQUEST;
+	if (rr_requested_name)
+		g_free(rr_requested_name);
+	rr_requested_name = g_strdup(record_name);
+
+	if (rr_requested_start_mem_addr)
+		g_free(rr_requested_start_mem_addr);
+	if (start_mem_addr)
+		rr_requested_start_mem_addr = g_strdup(start_mem_addr);
+	if (rr_requested_end_mem_addr)
+		g_free(rr_requested_end_mem_addr);
+	if (end_mem_addr)
+		rr_requested_end_mem_addr = g_strdup(end_mem_addr);
+
+	if(rr_requested_start_time_pc)
+		g_free(rr_requested_start_time_pc);
+	if(start_time_pc)
+		rr_requested_start_time_pc = g_strdup(start_time_pc);
+	if(rr_requested_end_time_pc)
+		g_free(rr_requested_end_time_pc);
+	if(end_time_pc)
+		rr_requested_end_time_pc = g_strdup(end_time_pc);
 }
 
 void qmp_begin_code_record(const char* record_name, Error** errp)
@@ -1349,6 +1382,18 @@ void hmp_trace_one(Monitor* mon, const QDict* qdict)
     const char* end_addr = qdict_get_try_str(qdict, "end_addr");
 
     qmp_trace_one(asid, start_addr, end_addr, &err);
+}
+
+void hmp_trace_one_detail(Monitor* mon, const QDict* qdict)
+{
+    Error* err;
+    const char* asid = qdict_get_try_str(qdict, "record_name");
+    const char* start_mem_addr = qdict_get_try_str(qdict, "start_mem_addr");
+    const char* end_mem_addr = qdict_get_try_str(qdict, "end_mem_addr");
+    const char* start_time_pc = qdict_get_try_str(qdict, "start_time_pc");
+    const char* end_time_pc = qdict_get_try_str(qdict, "end_time_pc");
+
+    qmp_trace_one_detail(asid, start_mem_addr, end_mem_addr, start_time_pc, end_time_pc, &err);
 }
 
 void hmp_begin_code_record(Monitor* mon, const QDict* qdict)
@@ -1446,27 +1491,79 @@ int rr_do_begin_code_record(CPUState* cpu_state)
 	if (rr_record_code_requested == RR_CODE_RECORD_ALL_REQUEST) {
 		NewTrace = 1;
 		TraceDetail = 0;
-		StartAddr = 0;
-		EndAddr = 0;
+		StartMemAddr = 0;
+		EndMemAddr = 0;
+		StartTimePC = 0;
+		EndTimePC = 0;
 	} else if (rr_record_code_requested == RR_CODE_RECORD_TRACE_ONE_REQUEST) {
 		NewTrace = 1;
 		TraceDetail = 1;
-		StartAddr = 0;
-		EndAddr = 0;
+		StartMemAddr = 0;
+		EndMemAddr = 0;
+		StartTimePC = 0;
+		EndTimePC = 0;
 
-		if(rr_requested_start_addr){
-			StartAddr = strtoull(rr_requested_start_addr, 0, 0);
-			g_free(rr_requested_start_addr);
-			rr_requested_start_addr = NULL;
+		if(rr_requested_start_mem_addr){
+			StartMemAddr = strtoull(rr_requested_start_mem_addr, 0, 0);
+			g_free(rr_requested_start_mem_addr);
+			rr_requested_start_mem_addr = NULL;
 		}
-		if(rr_requested_end_addr){
-			EndAddr = strtoull(rr_requested_end_addr, 0, 0);
-			g_free(rr_requested_end_addr);
-			rr_requested_end_addr = NULL;
+		if(rr_requested_end_mem_addr){
+			EndMemAddr = strtoull(rr_requested_end_mem_addr, 0, 0);
+			g_free(rr_requested_end_mem_addr);
+			rr_requested_end_mem_addr = NULL;
 		}
-		if(EndAddr <= StartAddr){
-			StartAddr = 0;
-			EndAddr = 0;
+		if(EndMemAddr <= StartMemAddr){
+			StartMemAddr = 0;
+			EndMemAddr = 0;
+		}
+
+		if(rr_begin_code_record_names == NULL)
+			rr_begin_code_record_names = g_hash_table_new_full(g_str_hash, g_str_equal,
+					g_free, NULL);
+		if(rr_requested_name){
+			g_hash_table_remove_all(rr_begin_code_record_names);
+			g_hash_table_insert(rr_begin_code_record_names, g_strdup(rr_requested_name), NULL);
+			if(rr_end_code_record_names){
+				if(g_hash_table_contains(rr_end_code_record_names, rr_requested_name))
+					g_hash_table_remove(rr_end_code_record_names, rr_requested_name);
+			}
+			g_free(rr_requested_name);
+			rr_requested_name = NULL;
+		}
+	} else if (rr_record_code_requested == RR_CODE_RECORD_TRACE_ONE_DETAIL_REQUEST){
+		NewTrace = 1;
+		TraceDetail = 1;
+		StartMemAddr = 0;
+		EndMemAddr = 0;
+		StartTimePC = 0;
+		EndTimePC = 0;
+		rr_end_all_code_records_requested = 1;
+
+		if(rr_requested_start_mem_addr){
+			StartMemAddr = strtoull(rr_requested_start_mem_addr, 0, 0);
+			g_free(rr_requested_start_mem_addr);
+			rr_requested_start_mem_addr = NULL;
+		}
+		if(rr_requested_end_mem_addr){
+			EndMemAddr = strtoull(rr_requested_end_mem_addr, 0, 0);
+			g_free(rr_requested_end_mem_addr);
+			rr_requested_end_mem_addr = NULL;
+		}
+		if(EndMemAddr <= StartMemAddr){
+			StartMemAddr = 0;
+			EndMemAddr = 0;
+		}
+
+		if(rr_requested_start_time_pc){
+			StartTimePC = strtoull(rr_requested_start_time_pc, 0, 0);
+			g_free(rr_requested_start_time_pc);
+			rr_requested_start_time_pc = NULL;
+		}
+		if(rr_requested_end_time_pc){
+			EndTimePC = strtoull(rr_requested_end_time_pc, 0, 0);
+			g_free(rr_requested_end_time_pc);
+			rr_requested_end_time_pc = NULL;
 		}
 
 		if(rr_begin_code_record_names == NULL)
@@ -1485,8 +1582,10 @@ int rr_do_begin_code_record(CPUState* cpu_state)
 	} else if (rr_record_code_requested == RR_CODE_RECORD_ONE_REQUEST) {
 		NewTrace = 0;
 		TraceDetail = 0;
-		StartAddr = 0;
-		EndAddr = 0;
+		StartMemAddr = 0;
+		EndMemAddr = 0;
+		StartTimePC = 0;
+		EndTimePC = 0;
 
 		if(rr_begin_code_record_names == NULL)
 			rr_begin_code_record_names = g_hash_table_new_full(g_str_hash, g_str_equal,
@@ -1604,8 +1703,10 @@ void rr_do_end_record(void)
 					g_hash_table_remove(rr_begin_code_record_names, rr_requested_name);
 					if(!g_hash_table_size(rr_begin_code_record_names)){
 						rr_end_all_code_records_requested = 1;
-						StartAddr = 0;
-						EndAddr = 0;
+						StartMemAddr = 0;
+						EndMemAddr = 0;
+						StartTimePC = 0;
+						EndTimePC = 0;
 					    // turn off logging
 					    rr_mode = RR_OFF;
 						rr_reset_state(first_cpu);
@@ -1620,8 +1721,10 @@ void rr_do_end_record(void)
 			&& rr_in_code_record()) {
 		NewTrace = 1;
 		TraceDetail = 0;
-		StartAddr = 0;
-		EndAddr = 0;
+		StartMemAddr = 0;
+		EndMemAddr = 0;
+		StartTimePC = 0;
+		EndTimePC = 0;
 
 	    rr_end_all_code_records_requested = 1;
 	    if(rr_begin_code_record_names)

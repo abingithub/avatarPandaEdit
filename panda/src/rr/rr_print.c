@@ -44,14 +44,18 @@ volatile sig_atomic_t rr_end_all_code_records_requested = 0;
 GHashTable* rr_end_code_record_names = NULL;
 GHashTable* rr_begin_code_record_names = NULL;
 volatile sig_atomic_t rr_end_replay_requested = 0;
-char* rr_requested_start_addr = NULL;
-char* rr_requested_end_addr = NULL;
+char* rr_requested_start_mem_addr = NULL;
+char* rr_requested_end_mem_addr = NULL;
+char* rr_requested_start_time_pc = NULL;
+char* rr_requested_end_time_pc = NULL;
 char* rr_requested_name = NULL;
 char* rr_snapshot_name = NULL;
 volatile sig_atomic_t NewTrace = 0;
 volatile sig_atomic_t TraceDetail = 0; /* True: dump every inst; False: dump insts not appeared*/
-volatile unsigned long long StartAddr = 0;
-volatile unsigned long long EndAddr = 0;
+volatile unsigned long long StartMemAddr = 0;
+volatile unsigned long long EndMemAddr = 0;
+volatile unsigned long long StartTimePC = 0;
+volatile unsigned long long EndTimePC = 0;
 volatile sig_atomic_t rr_end_code_record_count = 0;
 
 // write this program point to this file 

@@ -62,14 +62,18 @@ extern GHashTable* rr_end_code_record_names;
 extern GHashTable* rr_begin_code_record_names;
 extern volatile int rr_end_all_code_records_requested;
 extern volatile int rr_end_replay_requested;
-extern char* rr_requested_start_addr;
-extern char* rr_requested_end_addr;
+extern char* rr_requested_start_mem_addr;
+extern char* rr_requested_end_mem_addr;
+extern char* rr_requested_start_time_pc;
+extern char* rr_requested_end_time_pc;
 extern char* rr_requested_name;
 extern char* rr_snapshot_name;
 extern volatile sig_atomic_t NewTrace;
 extern volatile sig_atomic_t TraceDetail;
-extern volatile unsigned long long StartAddr;
-extern volatile unsigned long long EndAddr;
+extern volatile unsigned long long StartMemAddr;
+extern volatile unsigned long long EndMemAddr;
+extern volatile unsigned long long StartTimePC;
+extern volatile unsigned long long EndTimePC;
 
 // used from monitor.c
 int rr_do_begin_record(const char* name, CPUState* cpu_state);

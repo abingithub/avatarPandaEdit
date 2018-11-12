@@ -6114,6 +6114,15 @@
 { 'command': 'trace_one', 'data': { 'record_name': 'str', 'start_addr': 'str', 'end_addr': 'str' } }
 
 ##
+# @trace_one_detail:
+#
+# Requests that we begin recording for later replay
+# 
+# TRL 20120501
+##
+{ 'command': 'trace_one_detail', 'data': { 'record_name': 'str', 'start_mem_addr': 'str', 'end_mem_addr': 'str', 'start_time_pc': 'str', 'end_time_pc': 'str' } }
+
+##
 # @begin_code_record:
 #
 # Requests that we begin recording for later replay
