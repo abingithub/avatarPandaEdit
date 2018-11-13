@@ -1590,6 +1590,7 @@ int rr_do_begin_code_record(CPUState* cpu_state)
 		EndMemAddr = 0;
 		StartTimePC = 0;
 		EndTimePC = 0;
+		TouchedEndPC = 0;
 
 		if(rr_begin_code_record_names == NULL)
 			rr_begin_code_record_names = g_hash_table_new_full(g_str_hash, g_str_equal,
@@ -1711,6 +1712,7 @@ void rr_do_end_record(void)
 						EndMemAddr = 0;
 						StartTimePC = 0;
 						EndTimePC = 0;
+						TouchedEndPC = 0;
 					    // turn off logging
 					    rr_mode = RR_OFF;
 						rr_reset_state(first_cpu);
@@ -1729,6 +1731,7 @@ void rr_do_end_record(void)
 		EndMemAddr = 0;
 		StartTimePC = 0;
 		EndTimePC = 0;
+		TouchedEndPC = 0;
 
 	    rr_end_all_code_records_requested = 1;
 	    if(rr_begin_code_record_names)

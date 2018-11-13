@@ -167,13 +167,17 @@ static void record_current_pc_page(CPUState* cs, target_ulong tbStart,
 		rr_end_all_code_records_requested = 0;
 		FILE* pcFile = fopen("dyn_traces/Tracing", "a+");
 		fclose(pcFile);
+		StartTimePC = 0;
 	}
-	if(EndTimePC && TouchedEndPC){
-		rr_end_all_code_records_requested = 1;
-	}
-	if(EndTimePC && (EndTimePC == pc)){
-		TouchedEndPC = 1;
-		ret = system("rm -fr dyn_traces/Tracing");
+	if (EndTimePC) {
+		if (EndTimePC == pc) {
+			TouchedEndPC = 1;
+		} else if (TouchedEndPC) {
+			rr_end_all_code_records_requested = 1;
+			TouchedEndPC = 0;
+			EndTimePC = 0;
+			ret = system("rm -fr dyn_traces/Tracing");
+		}
 	}
 
 	if (rr_end_all_code_records_requested)
