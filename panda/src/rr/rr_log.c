@@ -133,6 +133,7 @@ volatile unsigned long long StartMemAddr = 0;
 volatile unsigned long long EndMemAddr = 0;
 volatile unsigned long long StartTimePC = 0;
 volatile unsigned long long EndTimePC = 0;
+volatile int TouchedEndPC = 0;
 
 unsigned rr_next_progress = 1;
 
@@ -1495,6 +1496,7 @@ int rr_do_begin_code_record(CPUState* cpu_state)
 		EndMemAddr = 0;
 		StartTimePC = 0;
 		EndTimePC = 0;
+		TouchedEndPC = 0;
 	} else if (rr_record_code_requested == RR_CODE_RECORD_TRACE_ONE_REQUEST) {
 		NewTrace = 1;
 		TraceDetail = 1;
@@ -1502,6 +1504,7 @@ int rr_do_begin_code_record(CPUState* cpu_state)
 		EndMemAddr = 0;
 		StartTimePC = 0;
 		EndTimePC = 0;
+		TouchedEndPC = 0;
 
 		if(rr_requested_start_mem_addr){
 			StartMemAddr = strtoull(rr_requested_start_mem_addr, 0, 0);
@@ -1538,6 +1541,7 @@ int rr_do_begin_code_record(CPUState* cpu_state)
 		EndMemAddr = 0;
 		StartTimePC = 0;
 		EndTimePC = 0;
+		TouchedEndPC = 0;
 		rr_end_all_code_records_requested = 1;
 
 		if(rr_requested_start_mem_addr){

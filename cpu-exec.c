@@ -163,10 +163,18 @@ static void record_current_pc_page(CPUState* cs, target_ulong tbStart,
 	panda_cpu_state(cs, &pc, &cs_base, &flags);
 	assert(tbStart == pc);
 
-	if(StartTimePC && (StartTimePC == pc))
+	if (StartTimePC && (StartTimePC == pc)) {
 		rr_end_all_code_records_requested = 0;
-	if(EndTimePC && (EndTimePC == pc))
+		FILE* pcFile = fopen("dyn_traces/Tracing", "a+");
+		fclose(pcFile);
+	}
+	if(EndTimePC && TouchedEndPC){
 		rr_end_all_code_records_requested = 1;
+	}
+	if(EndTimePC && (EndTimePC == pc)){
+		TouchedEndPC = 1;
+		ret = system("rm -fr dyn_traces/Tracing");
+	}
 
 	if (rr_end_all_code_records_requested)
 		return;
@@ -194,11 +202,11 @@ static void record_current_pc_page(CPUState* cs, target_ulong tbStart,
 	if (NewTrace) {
 		struct stat st = { 0 };
 		if (stat("./dyn_traces", &st) == 0) {
-			ret = system("rm -fr dyn_traces");
+			ret = system("rm -fr dyn_traces/*");
 		}
 		memset(&st, 0, sizeof(st));
 		if (stat("./stat_traces", &st) == 0) {
-			ret = system("rm -fr stat_traces");
+			ret = system("rm -fr stat_traces/*");
 		}
 #if 0
 		if (donePageHash) {

@@ -74,6 +74,7 @@ extern volatile unsigned long long StartMemAddr;
 extern volatile unsigned long long EndMemAddr;
 extern volatile unsigned long long StartTimePC;
 extern volatile unsigned long long EndTimePC;
+extern volatile int TouchedEndPC;
 
 // used from monitor.c
 int rr_do_begin_record(const char* name, CPUState* cpu_state);
