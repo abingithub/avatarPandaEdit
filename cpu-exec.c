@@ -251,10 +251,12 @@ static void record_current_pc_page(CPUState* cs, target_ulong tbStart,
 				"\ncs[%016"PRIx64"] lp[%016"PRIx64"] sp[%016"PRIx64"] %016"PRIx64":\n",
 				(uintptr_t) cs, (theLastTb ? theLastTb->pc : 0), env->regs[R_ESP], env->eip);
 		}else
-# endif {
+# endif
+        {
 		fprintf(df,
 				"\ncs[%08x] lp[%08x] sp[%08x] %08x:\n",
-				(uintptr_t) cs, (theLastTb ? theLastTb->pc : 0), (uint32_t)env->regs[R_ESP], (uint32_t)env->eip);
+				(uint32_t)(uintptr_t) cs, (uint32_t)(theLastTb ? theLastTb->pc : 0),
+				(uint32_t)env->regs[R_ESP], (uint32_t)env->eip);
 		}
 #else
 #error "record_current_pc_page() not implemented for target architecture."
