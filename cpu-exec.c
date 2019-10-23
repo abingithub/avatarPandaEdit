@@ -194,8 +194,6 @@ static void record_current_pc_page(CPUState* cs, target_ulong tbStart,
 			return;
 	}
 
-	target_ulong stack = panda_current_sp(cs);
-
 	if (StartMemAddr && EndMemAddr) {
 		if (pc < StartMemAddr || pc >= EndMemAddr)
 			return;
@@ -244,10 +242,24 @@ static void record_current_pc_page(CPUState* cs, target_ulong tbStart,
 	if (ret == -1) {
 		fprintf(df, "\n"TARGET_FMT_lx":\n (None)", pc);
 	} else {
+#if defined(TARGET_I386)
+		X86CPU *cpu = X86_CPU(cs);
+		CPUX86State *env = &cpu->env;
+# ifdef TARGET_X86_64
+		if (env->hflags & HF_CS64_MASK){
 		fprintf(df,
-				"\ncs["TARGET_FMT_lx"] lp["TARGET_FMT_lx"] sp["TARGET_FMT_lx"] "TARGET_FMT_lx":\n",
-				(target_ulong) (uintptr_t) cs, (theLastTb ? theLastTb->pc : 0),
-				stack, pc);
+				"\ncs[%016"PRIx64"] lp[%016"PRIx64"] sp[%016"PRIx64"] %016"PRIx64":\n",
+				(uintptr_t) cs, (theLastTb ? theLastTb->pc : 0), env->regs[R_ESP], env->eip);
+		}else
+# endif {
+		fprintf(df,
+				"\ncs[%08x] lp[%08x] sp[%08x] %08x:\n",
+				(uintptr_t) cs, (theLastTb ? theLastTb->pc : 0), (uint32_t)env->regs[R_ESP], (uint32_t)env->eip);
+		}
+#else
+#error "record_current_pc_page() not implemented for target architecture."
+#endif
+
 #if 0
 		if (curTb) {
 			TranslationBlock* jln0 = (TranslationBlock*) curTb->jmp_list_next[0];
